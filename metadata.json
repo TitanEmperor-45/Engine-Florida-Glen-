@@ -1,0 +1,6 @@
+{
+  "name": "Engen Florida-Glen | Biometric Time Clock & Attendance",
+  "description": "Employee time clocking, leave requests, automated payroll reports, and Bio-Matrix USB attendance sync for Engen Florida-Glen Garage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
