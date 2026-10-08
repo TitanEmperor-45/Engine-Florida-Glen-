@@ -5,12 +5,18 @@ interface EngenLogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showSubtitle?: boolean;
+  redBox?: boolean;
+  subtitleText?: string;
+  titleText?: string;
 }
 
 export const EngenLogo: React.FC<EngenLogoProps> = ({
   className = '',
   size = 'md',
   showSubtitle = true,
+  redBox = false,
+  subtitleText,
+  titleText,
 }) => {
   const [imgError, setImgError] = useState(false);
 
@@ -28,11 +34,15 @@ export const EngenLogo: React.FC<EngenLogoProps> = ({
     xl: 'text-xl',
   };
 
+  const badgeBoxClass = redBox
+    ? 'border-2 border-red-600 ring-2 ring-red-100 shadow-sm'
+    : 'border border-slate-200 shadow-xs';
+
   return (
     <div className={`flex items-center gap-3 ${className}`}>
-      {/* Official Engen Logo Badge - High Clarity */}
+      {/* Official Engen Logo Badge (Red Box Container with Blue/White Emblem) */}
       <div
-        className={`${containerSizes[size]} rounded-xl bg-white shrink-0 border border-slate-200 shadow-xs flex items-center justify-center overflow-hidden transition-transform`}
+        className={`${containerSizes[size]} rounded-xl bg-white shrink-0 ${badgeBoxClass} flex items-center justify-center overflow-hidden transition-transform`}
       >
         {!imgError ? (
           <img
@@ -77,13 +87,15 @@ export const EngenLogo: React.FC<EngenLogoProps> = ({
             •
           </span>
           <span className={`${titleSizes[size]} font-bold text-slate-900 tracking-tight`}>
-            Florida-Glen
+            {titleText || 'Florida-Glen'}
           </span>
         </div>
         {showSubtitle && (
-          <div className="text-[11px] text-slate-500 font-medium tracking-normal flex items-center gap-1.5 mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-            <span>Service Station & Convenience Store</span>
+          <div className="text-[11px] sm:text-xs text-slate-600 font-semibold tracking-normal flex items-center gap-1.5 mt-0.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
+            <span className="text-slate-700 font-medium">
+              {subtitleText || 'Florida-Glen : Service Station and Convenient Store'}
+            </span>
           </div>
         )}
       </div>

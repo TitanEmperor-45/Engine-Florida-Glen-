@@ -163,6 +163,17 @@ export default function App() {
     setStaffList(updated);
     saveStaff(updated);
 
+    // Call server database endpoint for immediate single-record persistence
+    try {
+      await fetch(`/api/staff/${target.id}/hourly-rate`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hourlyRate: newRate }),
+      });
+    } catch {
+      // Fallback to pushServerSync
+    }
+
     // Multi-channel notification for rate adjustment
     const newNotifs = await dispatchMultiChannelNotification({
       title: `Hourly Rate Adjusted: ${target.name}`,
@@ -571,6 +582,7 @@ export default function App() {
             onAddStaff={handleAddStaff}
             onUpdateStaff={handleUpdateStaff}
             onDeleteStaff={handleDeleteStaff}
+            onUpdateHourlyRate={handleUpdateHourlyRate}
           />
         )}
 
@@ -586,6 +598,7 @@ export default function App() {
             onBatchAutoRoster={handleBatchAutoRoster}
             onAddHoliday={handleAddHoliday}
             onDeleteHoliday={handleDeleteHoliday}
+            onUpdateHourlyRate={handleUpdateHourlyRate}
           />
         )}
 

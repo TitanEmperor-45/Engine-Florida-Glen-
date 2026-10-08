@@ -33,6 +33,7 @@ import {
   X,
   History,
 } from 'lucide-react';
+import logoImg from '../assets/images/engen_florida_glen_logo_1791460528638.jpg';
 
 interface ReportsViewProps {
   staffList: StaffMember[];
@@ -166,13 +167,36 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     <div className="space-y-6">
       {/* Header and Controls (Hidden in Print) */}
       <div className="no-print space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
               Automated Reports & Timesheet Analytics
             </h1>
             <div className="text-xs text-slate-500 mt-0.5">
               Generate scheduled attendance logs, calculate payroll hours, and export audit sheets
+            </div>
+          </div>
+
+          {/* Official Logo Banner placed directly in the designated header area (red drawing in user request) */}
+          <div className="flex items-center gap-3.5 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-2xs self-start lg:self-center">
+            {/* Logo Badge (Red Box with Blue X in drawing) */}
+            <div className="w-11 h-11 rounded-xl bg-white border-2 border-red-600 ring-2 ring-red-100 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+              <img
+                src={logoImg}
+                alt="Engen Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            {/* Logo Writing (Red lines in drawing) */}
+            <div className="leading-tight">
+              <div className="flex items-center gap-1.5 text-xs font-black tracking-tight text-[#003B73]">
+                <span>ENGEN</span>
+                <span className="text-[#E31837]">•</span>
+                <span className="text-slate-900 font-bold">Florida-Glen</span>
+              </div>
+              <div className="text-xs font-bold text-slate-800 mt-0.5">
+                Florida-Glen : Service Station and Convenient Store
+              </div>
             </div>
           </div>
 

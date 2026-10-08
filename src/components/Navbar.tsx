@@ -55,119 +55,130 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Zone 1: Brand title wordmark with Engen logo */}
-          <div className="flex items-center gap-3">
+          {/* Zone 1: Top Bar Header (Logo moved to main view content as requested) */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             <button
               onClick={() => setActiveTab('clock')}
-              className="text-left focus:outline-none hover:opacity-90 transition-opacity"
+              className="text-left focus:outline-none hover:opacity-90 transition-opacity flex items-center gap-2"
+              title="Engen Florida-Glen Garage Portal"
             >
-              <EngenLogo size="md" showSubtitle={true} />
+              <div className="w-8 h-8 rounded-lg bg-[#003B73] text-white font-black text-xs flex items-center justify-center shadow-2xs border border-blue-950">
+                EG
+              </div>
+              <div className="leading-tight">
+                <div className="text-xs font-black tracking-tight text-slate-900 flex items-center gap-1">
+                  <span className="text-[#003B73]">ENGEN</span>
+                  <span className="text-[#E31837]">•</span>
+                  <span className="text-slate-800">ERS</span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">Bio-Matrix Q24PC</div>
+              </div>
             </button>
 
             {/* Live Database Status Indicator */}
-            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Live DB Active</span>
+            <div className="hidden xl:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-semibold text-emerald-800">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Live DB</span>
             </div>
 
-            <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 pl-3 border-l border-slate-200">
+            <div className="hidden 2xl:flex items-center gap-1 text-[11px] text-slate-500 pl-2 border-l border-slate-200">
               <span className="font-mono tabular-nums font-semibold text-emerald-600">
                 {clockedInCount}/{totalStaffCount}
               </span>
-              <span>staff on duty</span>
+              <span>staff</span>
             </div>
           </div>
 
-          {/* Zone 2: Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Zone 2: Navigation Links - Scaled & Balanced to fit comfortably */}
+          <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 overflow-x-auto">
             <button
               onClick={() => setActiveTab('clock')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'clock'
                   ? 'text-slate-900 bg-slate-100 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Clock className="w-4 h-4 text-slate-500" />
-              <span>Time Clock</span>
+              <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-500 shrink-0" />
+              <span>Clock</span>
             </button>
 
             <button
               onClick={() => setActiveTab('biometric_analytics')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'biometric_analytics'
                   ? 'text-blue-700 bg-blue-50 font-bold border border-blue-200'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
               title="Scanner Hours Breakdown (Day/Week/Month)"
             >
-              <Fingerprint className="w-4 h-4 text-blue-600" />
+              <Fingerprint className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 shrink-0" />
               <span>att.log Hours</span>
             </button>
 
             <button
               onClick={() => setActiveTab('leaves')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'leaves'
                   ? 'text-slate-900 bg-slate-100 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <CalendarDays className="w-4 h-4 text-slate-500" />
-              <span>Leave Requests</span>
+              <CalendarDays className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-500 shrink-0" />
+              <span>Leaves</span>
             </button>
 
             <button
               onClick={() => setActiveTab('staff')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'staff'
                   ? 'text-slate-900 bg-slate-100 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Users className="w-4 h-4 text-slate-500" />
+              <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-500 shrink-0" />
               <span>Staff & Rates</span>
             </button>
 
             <button
               onClick={() => setActiveTab('calendar')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'calendar'
                   ? 'text-slate-900 bg-slate-100 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Calendar className="w-4 h-4 text-blue-600" />
+              <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 shrink-0" />
               <span>Roster</span>
             </button>
 
             <button
               onClick={() => setActiveTab('usb_import')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'usb_import'
                   ? 'text-slate-900 bg-slate-100 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <HardDriveDownload className="w-4 h-4 text-blue-600" />
+              <HardDriveDownload className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-blue-600 shrink-0" />
               <span>USB Import</span>
             </button>
 
             <button
               onClick={() => setActiveTab('reports')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 text-xs lg:text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                 activeTab === 'reports'
                   ? 'text-slate-900 bg-slate-100 font-bold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+              <FileSpreadsheet className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-500 shrink-0" />
               <span>Reports</span>
             </button>
           </nav>
 
           {/* Zone 3: Primary Actions, Open-WA Notification Bell & Admin Profile */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Quick Export to Accountant Button */}
             {onExportAccountantCsv && (
               <button
@@ -176,8 +187,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors whitespace-nowrap shadow-2xs"
                 title="Export complete payroll breakdown for the accountant in South African Rands"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Accountant CSV</span>
+                <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="hidden lg:inline">Accountant CSV</span>
+                <span className="lg:hidden text-[11px]">CSV</span>
               </button>
             )}
 

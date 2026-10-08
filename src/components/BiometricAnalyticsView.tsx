@@ -32,6 +32,7 @@ import {
   ShieldAlert,
   ChevronDown,
 } from 'lucide-react';
+import { EngenLogo } from './EngenLogo';
 
 interface BiometricAnalyticsViewProps {
   staffList: StaffMember[];
@@ -72,6 +73,60 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
       onUpdateHourlyRate(staffId, val);
     }
     setEditingStaffId(null);
+  };
+
+  const renderEditableRate = (pinOrId: string, currentRate: number) => {
+    const staff = staffList.find((s) => s.biometricId === pinOrId || s.id === pinOrId);
+    if (!staff) {
+      return <span className="font-mono font-medium text-slate-800">{formatZAR(currentRate)}/hr</span>;
+    }
+    const isEditing = editingStaffId === staff.id;
+    if (isEditing) {
+      return (
+        <div className="flex items-center justify-end gap-1">
+          <span className="text-[11px] font-bold text-slate-500">R</span>
+          <input
+            type="number"
+            step="0.5"
+            value={tempRate}
+            onChange={(e) => setTempRate(e.target.value)}
+            className="w-16 px-1.5 py-0.5 text-xs font-mono font-bold bg-white border border-blue-500 rounded text-slate-900 shadow-2xs"
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => handleSaveRate(staff.id)}
+            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+            title="Save amended rate"
+          >
+            <Check className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditingStaffId(null)}
+            className="p-1 text-rose-600 hover:bg-rose-50 rounded"
+            title="Cancel"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center justify-end gap-1.5">
+        <span className="font-mono font-bold text-slate-900 text-xs">
+          {formatZAR(staff.hourlyRate)}/hr
+        </span>
+        <button
+          type="button"
+          onClick={() => handleStartEditRate(staff)}
+          className="p-1 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+          title={`Administrator Binnie: Amend hourly rate for ${staff.name}`}
+        >
+          <Edit2 className="w-3 h-3" />
+        </button>
+      </div>
+    );
   };
 
   const handleExportAccountant = () => {
@@ -122,54 +177,62 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
-              <Fingerprint className="w-3.5 h-3.5 text-blue-600" />
-              ERS Bio-Matrix Q24PC Scanner Hub
-            </span>
-            <span className="text-xs text-slate-400 font-mono">att.log Parser Engine</span>
+      {/* Top Brand Banner: Red Square Logo with Blue X + Florida-Glen: Service Station and Convenient Store */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <EngenLogo
+              size="lg"
+              redBox={true}
+              showSubtitle={true}
+              subtitleText="Florida-Glen : Service Station and Convenient Store"
+            />
+            <div className="hidden sm:block h-10 w-px bg-slate-200 mx-1"></div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                  <Fingerprint className="w-3.5 h-3.5 text-blue-600" />
+                  ERS Bio-Matrix Q24PC Scanner Hub
+                </span>
+                <span className="text-xs text-slate-400 font-mono">att.log Parser Engine</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Calculates real hours worked from scanner punches, accounting for late coming, absents, approved leave, and rates amended by Binnie.
+              </p>
+            </div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 mt-1">
-            Biometric Scanner Hours, Exceptions & Accountant Export
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Calculates real hours worked from scanner punches, accounting for late coming, absents, approved leave, and rates set by Binnie.
-          </p>
-        </div>
 
-        {/* Global Export actions */}
-        <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
-          <button
-            type="button"
-            onClick={openUsbImport}
-            className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
-          >
-            <HardDriveDownload className="w-4 h-4 text-blue-600" />
-            <span>Upload att.log</span>
-          </button>
+          {/* Global Export & Upload Actions - Scaled to fit */}
+          <div className="flex flex-wrap items-center gap-2 self-start xl:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={openUsbImport}
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
+            >
+              <HardDriveDownload className="w-4 h-4 text-blue-600" />
+              <span>Upload att.log</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleExportCurrent}
-            className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
-            title="Download CSV for currently selected period"
-          >
-            <Download className="w-4 h-4 text-slate-500" />
-            <span>Export Period CSV</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleExportCurrent}
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
+              title="Download CSV for currently selected period"
+            >
+              <Download className="w-4 h-4 text-slate-500" />
+              <span>Export Period CSV</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleExportAccountant}
-            className="px-4 py-1.5 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
-            title="Export complete payroll breakdown for the accountant in South African Rands"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
-            <span>Export to Accountant (CSV)</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleExportAccountant}
+              className="px-4 py-1.5 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+              title="Export complete payroll breakdown for the accountant in South African Rands"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
+              <span>Export to Accountant (CSV)</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -356,6 +419,7 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
                   <th className="py-2.5 px-3">Punches in att.log</th>
                   <th className="py-2.5 px-3 text-right">Hours Worked</th>
                   <th className="py-2.5 px-3 text-right">Overtime</th>
+                  <th className="py-2.5 px-3 text-right">Hourly Wage (R)</th>
                   <th className="py-2.5 px-3">Attendance Status</th>
                   <th className="py-2.5 px-3 text-right">Est. Daily Cost</th>
                 </tr>
@@ -363,7 +427,7 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
               <tbody className="divide-y divide-slate-100 font-normal">
                 {filteredDaily.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="py-8 text-center text-slate-400">
+                    <td colSpan={11} className="py-8 text-center text-slate-400">
                       No biometric log records found.
                     </td>
                   </tr>
@@ -402,6 +466,9 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
                         ) : (
                           '0.00h'
                         )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        {renderEditableRate(row.pin, row.hourlyRate)}
                       </td>
                       <td className="py-2.5 px-3">
                         {row.onLeave ? (
@@ -506,8 +573,8 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
                           {wk.lateIncidents} late ({wk.totalLateMinutes}m) · {wk.absentDays} absent
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-700">
-                        {formatZAR(wk.hourlyRate)}/hr
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        {renderEditableRate(wk.pin, wk.hourlyRate)}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">
                         {formatZAR(wk.estimatedGrossPay)}
@@ -585,8 +652,8 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
                       <td className="py-2.5 px-3 text-right font-mono text-amber-700 font-bold">
                         +{mo.overtimeHours.toFixed(2)}h
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-700">
-                        {formatZAR(mo.hourlyRate)}/hr
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        {renderEditableRate(mo.pin, mo.hourlyRate)}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                         {formatZAR(mo.totalGrossPay)}
@@ -665,8 +732,8 @@ export const BiometricAnalyticsView: React.FC<BiometricAnalyticsViewProps> = ({
                       <div className="text-[10px] text-slate-400 font-normal">{rec.role}</div>
                     </td>
                     <td className="py-3 px-3 text-slate-600">{rec.department}</td>
-                    <td className="py-3 px-3 text-right font-mono font-semibold text-slate-800">
-                      {formatZAR(rec.hourlyRate)}/hr
+                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                      {renderEditableRate(rec.pin, rec.hourlyRate)}
                     </td>
                     <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
                       {rec.totalHoursWorked.toFixed(2)}h

@@ -16,7 +16,7 @@
       "department": "Fuel Forecourt",
       "role": "Forecourt Supervisor & Pump Lead",
       "shiftId": "shift-fc-m12",
-      "hourlyRate": 48.5,
+      "hourlyRate": 49.5,
       "status": "active",
       "hireDate": "2023-03-15",
       "leaveBalances": {
@@ -51,6 +51,31 @@
   "holidays": [],
   "notifications": [
     {
+      "id": "notif-1791464992918",
+      "channel": "whatsapp",
+      "recipient": "+27 010 7489",
+      "recipientName": "Administrator Binnie",
+      "title": "System Check",
+      "message": "Live database and Open-WA connection active for Binnie.",
+      "timestamp": "2026-10-08T13:09:52.918Z",
+      "status": "delivered",
+      "openwaMessageId": "openwa-msg-1791464992898",
+      "type": "system",
+      "isRead": false
+    },
+    {
+      "id": "notif-rate-1791464987900",
+      "channel": "in_app",
+      "recipient": "Binnie",
+      "recipientName": "Administrator Binnie",
+      "title": "Hourly Rate Updated: Marcus Vance",
+      "message": "Rate adjusted from R 48.5 to R 49.5/hr by Administrator Binnie.",
+      "timestamp": "2026-10-08T13:09:47.900Z",
+      "status": "delivered",
+      "type": "hourly_rate_change",
+      "isRead": false
+    },
+    {
       "id": "notif-srv-1",
       "channel": "whatsapp",
       "recipient": "+27 010 7489",
@@ -74,5 +99,5 @@
     "autoDispatchEmail": true,
     "autoDispatchSms": true
   },
-  "lastSyncedAt": "2026-10-08T12:56:28.844Z"
+  "lastSyncedAt": "2026-10-08T13:09:52.918Z"
 }

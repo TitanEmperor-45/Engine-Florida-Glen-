@@ -15,6 +15,7 @@ import {
   CheckCheck,
   Download,
 } from 'lucide-react';
+import { EngenLogo } from './EngenLogo';
 
 interface LeaveViewProps {
   staffList: StaffMember[];
@@ -205,36 +206,52 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Leave Requests & Absence Management
-          </h1>
-          <div className="text-xs text-slate-500 mt-0.5">
-            Review time-off applications, manage entitlements, and track scheduled staff absences
+      {/* Top Brand Banner: Red Square Logo with Blue X + Florida-Glen: Service Station and Convenient Store */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <EngenLogo
+              size="lg"
+              redBox={true}
+              showSubtitle={true}
+              subtitleText="Florida-Glen : Service Station and Convenient Store"
+            />
+            <div className="hidden sm:block h-10 w-px bg-slate-200 mx-1"></div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-800 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
+                  Leave & Absence Approvals
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Reviewer: {adminName || 'Binnie'}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                Review time-off applications, manage entitlements, and track scheduled staff absences
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={exportLeavesCsv}
-            className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
-            title="Export leave records to CSV"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Export CSV</span>
-          </button>
+          <div className="flex items-center gap-2 self-start xl:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={exportLeavesCsv}
+              className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
+              title="Export leave records to CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsApplyModalOpen(true)}
-            className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>New Leave Request</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsApplyModalOpen(true)}
+              className="px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>+ New Leave Request</span>
+            </button>
+          </div>
         </div>
       </div>
 

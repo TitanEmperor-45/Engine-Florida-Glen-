@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   Download,
 } from 'lucide-react';
+import { EngenLogo } from './EngenLogo';
 
 interface TimeClockingViewProps {
   staffList: StaffMember[];
@@ -161,6 +162,46 @@ export const TimeClockingView: React.FC<TimeClockingViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Top Brand Banner: Red Square Logo with Blue X + Florida-Glen: Service Station and Convenient Store */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <EngenLogo
+          size="lg"
+          redBox={true}
+          showSubtitle={true}
+          subtitleText="Florida-Glen : Service Station and Convenient Store"
+        />
+
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+          <button
+            type="button"
+            onClick={openUsbImport}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 transition-colors shadow-2xs rounded-lg"
+          >
+            <HardDriveDownload className="w-3.5 h-3.5 text-blue-200" />
+            <span>Import Q24PC USB</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openManualPunchModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 transition-colors shadow-2xs rounded-lg"
+          >
+            <PlusCircle className="w-3.5 h-3.5 text-slate-500" />
+            <span>Manual Punch</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={exportPunchesCsv}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 transition-colors shadow-2xs rounded-lg"
+            title="Download CSV log"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span>Export Log</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Metric Strip - High Legibility */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-4">
