@@ -1,0 +1,78 @@
+{
+  "adminProfile": {
+    "name": "Binnie",
+    "cellPhone": "+27 010 7489",
+    "email": "valerie.ajtransportcater@gmail.com",
+    "role": "Station Administrator & General Manager",
+    "isLoggedIn": true
+  },
+  "staffList": [
+    {
+      "id": "staff-1001",
+      "name": "Marcus Vance",
+      "email": "marcus.v@engenfloridaglen.co.za",
+      "phone": "+27 82 555 4321",
+      "biometricId": "1001",
+      "department": "Fuel Forecourt",
+      "role": "Forecourt Supervisor & Pump Lead",
+      "shiftId": "shift-fc-m12",
+      "hourlyRate": 48.5,
+      "status": "active",
+      "hireDate": "2023-03-15",
+      "leaveBalances": {
+        "annual": 15,
+        "sick": 10,
+        "casual": 5
+      }
+    },
+    {
+      "id": "staff-1002",
+      "name": "Amara Chen",
+      "email": "amara.c@engenfloridaglen.co.za",
+      "phone": "+27 83 444 8765",
+      "biometricId": "1002",
+      "department": "Cashiers & QuickShop",
+      "role": "Lead Cashier & QuickShop Merchandiser",
+      "shiftId": "shift-csh-d12",
+      "hourlyRate": 42,
+      "status": "active",
+      "hireDate": "2023-08-20",
+      "leaveBalances": {
+        "annual": 12,
+        "sick": 8,
+        "casual": 4
+      }
+    }
+  ],
+  "shifts": [],
+  "punches": [],
+  "leaves": [],
+  "roster": [],
+  "holidays": [],
+  "notifications": [
+    {
+      "id": "notif-srv-1",
+      "channel": "whatsapp",
+      "recipient": "+27 010 7489",
+      "recipientName": "Binnie",
+      "title": "Open-WA WhatsApp Gateway Initialized",
+      "message": "Open-WA API is active and syncing live data for Engen Florida-Glen Garage.",
+      "timestamp": "2026-10-08T12:56:28.844Z",
+      "status": "delivered",
+      "type": "system",
+      "isRead": false
+    }
+  ],
+  "openwaConfig": {
+    "gatewayUrl": "http://localhost:2785",
+    "apiKey": "",
+    "sessionStatus": "connected",
+    "defaultRecipientPhone": "+27 010 7489",
+    "adminEmail": "valerie.ajtransportcater@gmail.com",
+    "lastPing": "2026-10-08T12:56:28.844Z",
+    "autoDispatchWhatsapp": true,
+    "autoDispatchEmail": true,
+    "autoDispatchSms": true
+  },
+  "lastSyncedAt": "2026-10-08T12:56:28.844Z"
+}

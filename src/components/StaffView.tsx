@@ -16,6 +16,7 @@ import {
   X,
   CheckCircle,
   Download,
+  Check,
 } from 'lucide-react';
 
 interface StaffViewProps {
@@ -60,6 +61,21 @@ export const StaffView: React.FC<StaffViewProps> = ({
   const [annualLeave, setAnnualLeave] = useState<number>(15);
   const [sickLeave, setSickLeave] = useState<number>(8);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Administrator Binnie Quick Hourly Rate Editor
+  const [editingRateStaffId, setEditingRateStaffId] = useState<string | null>(null);
+  const [inlineRateValue, setInlineRateValue] = useState<string>('');
+
+  const handleSaveInlineRate = (staff: StaffMember) => {
+    const val = parseFloat(inlineRateValue);
+    if (!isNaN(val) && val > 0) {
+      onUpdateStaff({
+        ...staff,
+        hourlyRate: val,
+      });
+    }
+    setEditingRateStaffId(null);
+  };
 
   const openAddModal = (suggestedBioId?: string) => {
     setEditingStaff(null);
@@ -353,12 +369,55 @@ export const StaffView: React.FC<StaffViewProps> = ({
 
                     <div className="flex items-center justify-between text-slate-600">
                       <span className="flex items-center gap-1.5 text-slate-500">
-                        <Banknote className="w-3.5 h-3.5" />
-                        Hourly Wage
+                        <Banknote className="w-3.5 h-3.5 text-emerald-600" />
+                        Hourly Wage (ZAR)
                       </span>
-                      <span className="font-mono tabular-nums text-slate-900 font-semibold">
-                        R {staff.hourlyRate.toFixed(2)}/hr
-                      </span>
+                      {editingRateStaffId === staff.id ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-slate-500 font-semibold">R</span>
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={inlineRateValue}
+                            onChange={(e) => setInlineRateValue(e.target.value)}
+                            className="w-16 px-1.5 py-0.5 text-xs font-mono font-bold bg-white border border-blue-500 rounded text-slate-900"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveInlineRate(staff)}
+                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                            title="Save rate"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingRateStaffId(null)}
+                            className="p-1 text-rose-600 hover:bg-rose-50 rounded"
+                            title="Cancel"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono tabular-nums text-slate-900 font-semibold">
+                            R {staff.hourlyRate.toFixed(2)}/hr
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingRateStaffId(staff.id);
+                              setInlineRateValue(String(staff.hourlyRate));
+                            }}
+                            className="p-1 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                            title="Binnie: Edit hourly rate"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 

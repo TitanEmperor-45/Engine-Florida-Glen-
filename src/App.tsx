@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StaffMember,
   PunchRecord,
@@ -15,6 +15,8 @@ import {
   AdminProfile,
   HolidayEvent,
   RosterShiftEntry,
+  NotificationItem,
+  OpenWaConfig,
 } from './types';
 import {
   loadAdminProfile,
@@ -34,10 +36,23 @@ import {
   saveRoster,
   loadHolidays,
   saveHolidays,
+  loadNotifications,
+  saveNotifications,
+  loadOpenWaConfig,
+  saveOpenWaConfig,
+  syncToServerDatabase,
+  fetchServerDatabase,
   resetAllToDemoData,
 } from './utils/storage';
+import { dispatchMultiChannelNotification } from './utils/notificationService';
+import {
+  calculateAttLogAnalytics,
+  generateAccountantExportCsv,
+  triggerCsvDownload,
+} from './utils/attLogAnalytics';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { TimeClockingView } from './components/TimeClockingView';
+import { BiometricAnalyticsView } from './components/BiometricAnalyticsView';
 import { CalendarView } from './components/CalendarView';
 import { StaffView } from './components/StaffView';
 import { LeaveView } from './components/LeaveView';
@@ -45,6 +60,7 @@ import { ReportsView } from './components/ReportsView';
 import { UsbImportModal } from './components/UsbImportModal';
 import { ManualPunchModal } from './components/ManualPunchModal';
 import { AdminProfileModal } from './components/AdminProfileModal';
+import { NotificationModal } from './components/NotificationModal';
 import { RotateCcw, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export default function App() {
@@ -64,11 +80,15 @@ export default function App() {
   );
   const [roster, setRoster] = useState<RosterShiftEntry[]>(() => loadRoster());
   const [holidays, setHolidays] = useState<HolidayEvent[]>(() => loadHolidays());
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => loadNotifications());
+  const [openwaConfig, setOpenwaConfig] = useState<OpenWaConfig>(() => loadOpenWaConfig());
+  const [isDbSynced, setIsDbSynced] = useState<boolean>(true);
 
   // Modals state
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [isUsbModalOpen, setIsUsbModalOpen] = useState<boolean>(false);
   const [isManualPunchOpen, setIsManualPunchOpen] = useState<boolean>(false);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState<boolean>(false);
 
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -77,10 +97,91 @@ export default function App() {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
-    }, 4000);
+    }, 4500);
   };
 
-  // State persistence listeners
+  // Sync with live server database on initialization
+  useEffect(() => {
+    async function syncOnStart() {
+      const serverState = await fetchServerDatabase();
+      if (serverState && serverState.data) {
+        const d = serverState.data;
+        if (d.adminProfile) {
+          setAdminProfile(d.adminProfile);
+          saveAdminProfile(d.adminProfile);
+        }
+        if (Array.isArray(d.staffList) && d.staffList.length > 0) {
+          setStaffList(d.staffList);
+          saveStaff(d.staffList);
+        }
+        if (Array.isArray(d.punches) && d.punches.length > 0) {
+          setPunches(d.punches);
+          savePunches(d.punches);
+        }
+        if (Array.isArray(d.leaves) && d.leaves.length > 0) {
+          setLeaves(d.leaves);
+          saveLeaves(d.leaves);
+        }
+        if (Array.isArray(d.notifications) && d.notifications.length > 0) {
+          setNotifications(d.notifications);
+          saveNotifications(d.notifications);
+        }
+        if (d.openwaConfig) {
+          setOpenwaConfig(d.openwaConfig);
+          saveOpenWaConfig(d.openwaConfig);
+        }
+        setIsDbSynced(true);
+      }
+    }
+    syncOnStart();
+  }, []);
+
+  // Sync changes to server database
+  const pushServerSync = useCallback(
+    async (delta: {
+      staffList?: StaffMember[];
+      punches?: PunchRecord[];
+      leaves?: LeaveRequest[];
+      roster?: RosterShiftEntry[];
+      notifications?: NotificationItem[];
+      adminProfile?: AdminProfile;
+      openwaConfig?: OpenWaConfig;
+    }) => {
+      const ok = await syncToServerDatabase(delta);
+      setIsDbSynced(ok);
+    },
+    []
+  );
+
+  // Hourly Rate setter by Administrator Binnie
+  const handleUpdateHourlyRate = async (staffId: string, newRate: number) => {
+    const target = staffList.find((s) => s.id === staffId || s.biometricId === staffId);
+    if (!target) return;
+
+    const oldRate = target.hourlyRate;
+    const updated = staffList.map((s) => (s.id === target.id ? { ...s, hourlyRate: newRate } : s));
+    setStaffList(updated);
+    saveStaff(updated);
+
+    // Multi-channel notification for rate adjustment
+    const newNotifs = await dispatchMultiChannelNotification({
+      title: `Hourly Rate Adjusted: ${target.name}`,
+      message: `Hourly rate updated from R ${oldRate} to R ${newRate}/hr by Administrator ${adminProfile.name}.`,
+      type: 'hourly_rate_change',
+      adminProfile,
+      openwaConfig,
+      staffTarget: target,
+    });
+
+    const updatedNotifs = [...newNotifs, ...notifications];
+    setNotifications(updatedNotifs);
+    saveNotifications(updatedNotifs);
+
+    pushServerSync({ staffList: updated, notifications: updatedNotifs });
+    showToast(`Hourly rate updated to R ${newRate.toFixed(2)}/hr for ${target.name}`);
+  };
+
+  // Record Punch
   const handleRecordPunch = (punchData: Omit<PunchRecord, 'id'>) => {
     const newRecord: PunchRecord = {
       ...punchData,
@@ -90,6 +191,7 @@ export default function App() {
     const updated = [newRecord, ...punches];
     setPunches(updated);
     savePunches(updated);
+    pushServerSync({ punches: updated });
 
     const staff = staffList.find((s) => s.id === punchData.staffId);
     showToast(`Punch recorded: ${staff?.name || 'Staff'} (${punchData.type.replace('_', ' ')})`);
@@ -99,13 +201,30 @@ export default function App() {
     const updated = punches.filter((p) => p.id !== punchId);
     setPunches(updated);
     savePunches(updated);
+    pushServerSync({ punches: updated });
     showToast('Punch record removed from audit history.');
   };
 
-  const handleCommitUsbPunches = (newPunches: PunchRecord[]) => {
+  // Commit USB punches with late arrival detection & multi-channel notification
+  const handleCommitUsbPunches = async (newPunches: PunchRecord[]) => {
     const updated = [...newPunches, ...punches];
     setPunches(updated);
     savePunches(updated);
+
+    // Multi-channel notification for att.log upload
+    const uploadNotifs = await dispatchMultiChannelNotification({
+      title: 'Biometric att.log Punches Imported',
+      message: `Successfully synchronized ${newPunches.length} punch records from Model Q24PC scanner into Engen Florida-Glen database.`,
+      type: 'attlog_upload',
+      adminProfile,
+      openwaConfig,
+    });
+
+    const updatedNotifs = [...uploadNotifs, ...notifications];
+    setNotifications(updatedNotifs);
+    saveNotifications(updatedNotifs);
+
+    pushServerSync({ punches: updated, notifications: updatedNotifs });
     showToast(`Successfully imported ${newPunches.length} punch records from USB flash drive.`);
   };
 
@@ -113,6 +232,7 @@ export default function App() {
     const updated = [...staffList, newStaff];
     setStaffList(updated);
     saveStaff(updated);
+    pushServerSync({ staffList: updated });
     showToast(`Staff member ${newStaff.name} registered (Bio ID #${newStaff.biometricId}).`);
   };
 
@@ -120,6 +240,7 @@ export default function App() {
     const updated = staffList.map((s) => (s.id === updatedStaff.id ? updatedStaff : s));
     setStaffList(updated);
     saveStaff(updated);
+    pushServerSync({ staffList: updated });
     showToast(`Staff profile for ${updatedStaff.name} updated.`);
   };
 
@@ -128,17 +249,38 @@ export default function App() {
     const updated = staffList.filter((s) => s.id !== staffId);
     setStaffList(updated);
     saveStaff(updated);
+    pushServerSync({ staffList: updated });
     showToast(`Staff member ${staff?.name || ''} removed.`);
   };
 
-  const handleAddLeave = (newLeave: LeaveRequest) => {
+  // Staff submits leave request -> alerts Administrator Binnie via Open-WA WhatsApp, Email & SMS
+  const handleAddLeave = async (newLeave: LeaveRequest) => {
     const updated = [newLeave, ...leaves];
     setLeaves(updated);
     saveLeaves(updated);
-    showToast('Leave application submitted for approval.');
+
+    const staff = staffList.find((s) => s.id === newLeave.staffId);
+
+    // Multi-channel notification to Binnie
+    const notifs = await dispatchMultiChannelNotification({
+      title: `New Leave Request: ${staff?.name || 'Employee'}`,
+      message: `${staff?.name || 'Staff'} submitted ${newLeave.daysCount} days ${newLeave.type} leave for ${newLeave.startDate} to ${newLeave.endDate}.\nReason: "${newLeave.reason}"\nAwaiting decision from Administrator Binnie.`,
+      type: 'leave_request',
+      adminProfile,
+      openwaConfig,
+      staffTarget: staff,
+    });
+
+    const updatedNotifs = [...notifs, ...notifications];
+    setNotifications(updatedNotifs);
+    saveNotifications(updatedNotifs);
+
+    pushServerSync({ leaves: updated, notifications: updatedNotifs });
+    showToast(`Leave application submitted. Alert sent to ${adminProfile.name} via Open-WA & Email.`);
   };
 
-  const handleUpdateLeaveStatus = (
+  // Administrator Binnie decides: Approve, Decline, or Pend
+  const handleUpdateLeaveStatus = async (
     leaveId: string,
     status: LeaveStatus,
     reviewNotes?: string
@@ -146,7 +288,7 @@ export default function App() {
     const leaveToUpdate = leaves.find((l) => l.id === leaveId);
     if (!leaveToUpdate) return;
 
-    // If approved, deduct leave balance from employee
+    // Deduct leave balance if approved
     if (status === 'approved' && leaveToUpdate.status !== 'approved') {
       const staff = staffList.find((s) => s.id === leaveToUpdate.staffId);
       if (staff) {
@@ -172,7 +314,7 @@ export default function App() {
         ? {
             ...l,
             status,
-            reviewedBy: 'Operations Administrator',
+            reviewedBy: `Administrator ${adminProfile.name}`,
             reviewedAt: new Date().toISOString(),
             reviewNotes: reviewNotes || l.reviewNotes,
           }
@@ -181,7 +323,53 @@ export default function App() {
 
     setLeaves(updatedLeaves);
     saveLeaves(updatedLeaves);
-    showToast(`Leave request marked as ${status}.`);
+
+    const staff = staffList.find((s) => s.id === leaveToUpdate.staffId);
+    const statusLabel =
+      status === 'approved' ? 'APPROVED' : status === 'declined' || status === 'rejected' ? 'DECLINED' : 'PENDED';
+
+    // Multi-channel notification on decision
+    const decisionNotifs = await dispatchMultiChannelNotification({
+      title: `Leave ${statusLabel}: ${staff?.name || 'Staff'}`,
+      message: `Leave request for ${leaveToUpdate.startDate} to ${leaveToUpdate.endDate} (${leaveToUpdate.daysCount}d) was ${statusLabel} by Administrator ${adminProfile.name}.\nNotes: ${reviewNotes || 'Updated in system'}`,
+      type: status === 'approved' ? 'leave_approved' : status === 'declined' || status === 'rejected' ? 'leave_declined' : 'leave_pended',
+      adminProfile,
+      openwaConfig,
+      staffTarget: staff,
+    });
+
+    const updatedNotifs = [...decisionNotifs, ...notifications];
+    setNotifications(updatedNotifs);
+    saveNotifications(updatedNotifs);
+
+    pushServerSync({ leaves: updatedLeaves, notifications: updatedNotifs });
+    showToast(`Leave request marked as ${status.toUpperCase()} by ${adminProfile.name}.`);
+  };
+
+  // Test Notification Trigger
+  const handleSendTestNotification = async (channel: 'whatsapp' | 'email' | 'sms' | 'in_app') => {
+    const testNotifs = await dispatchMultiChannelNotification({
+      title: `Test ${channel.toUpperCase()} Dispatch`,
+      message: `Verification message sent to Administrator Binnie (${adminProfile.cellPhone} · ${adminProfile.email}). Live database connection active.`,
+      type: 'system',
+      adminProfile,
+      openwaConfig,
+    });
+
+    const updated = [...testNotifs, ...notifications];
+    setNotifications(updated);
+    saveNotifications(updated);
+    pushServerSync({ notifications: updated });
+    showToast(`Test ${channel.toUpperCase()} alert dispatched.`);
+  };
+
+  // Export to Accountant in South African Rands (ZAR / R)
+  const handleExportAccountantCsv = () => {
+    const analytics = calculateAttLogAnalytics(punches, staffList, shifts, leaves, roster);
+    const period = new Date().toISOString().slice(0, 7);
+    const csv = generateAccountantExportCsv(analytics.accountantSummary, adminProfile, period);
+    triggerCsvDownload(csv, `engen_florida_glen_accountant_pack_${period}.csv`);
+    showToast('Accountant Payroll Pack CSV downloaded.');
   };
 
   const handleUpdateSchedules = (updatedSchedules: AutomatedReportSchedule[]) => {
@@ -196,7 +384,6 @@ export default function App() {
   };
 
   const handleSaveRosterEntry = (entry: Omit<RosterShiftEntry, 'id'>) => {
-    // Check if entry already exists for this staff on this date
     const existingIndex = roster.findIndex(
       (r) => r.staffId === entry.staffId && r.date === entry.date
     );
@@ -218,6 +405,7 @@ export default function App() {
 
     setRoster(updated);
     saveRoster(updated);
+    pushServerSync({ roster: updated });
     const staff = staffList.find((s) => s.id === entry.staffId);
     showToast(`Roster updated: ${staff?.name || 'Staff'} on ${entry.date}`);
   };
@@ -226,11 +414,11 @@ export default function App() {
     const updated = roster.filter((r) => r.id !== entryId);
     setRoster(updated);
     saveRoster(updated);
+    pushServerSync({ roster: updated });
     showToast('Shift removed from roster schedule.');
   };
 
   const handleBatchAutoRoster = (monthStr: string) => {
-    // monthStr is e.g. "2026-10"
     const [yStr, mStr] = monthStr.split('-');
     const year = parseInt(yStr, 10);
     const month = parseInt(mStr, 10);
@@ -245,13 +433,11 @@ export default function App() {
       const dayOfWeek = dateObj.getDay();
 
       staffList.forEach((staff) => {
-        // Respect approved leaves
         const isLeave = leaves.some(
           (l) => l.staffId === staff.id && l.status === 'approved' && date >= l.startDate && date <= l.endDate
         );
         if (isLeave) return;
 
-        // Workshop & Admin off on Sundays
         if (staff.department === 'Administration & Management' || staff.department === 'Workshop & Service') {
           if (dayOfWeek === 0) return;
         }
@@ -268,6 +454,7 @@ export default function App() {
 
     setRoster(newEntries);
     saveRoster(newEntries);
+    pushServerSync({ roster: newEntries });
     showToast(`Auto-generated monthly roster for ${monthStr} (${newEntries.length} assignments).`);
   };
 
@@ -286,7 +473,7 @@ export default function App() {
   };
 
   const handleResetDemoData = () => {
-    if (confirm('Reset all punches, staff, leaves, roster, and report schedules to factory demo data?')) {
+    if (confirm('Reset all punches, staff, leaves, roster, and reports to default demo state (2 users)?')) {
       resetAllToDemoData();
       setStaffList(loadStaff());
       setShifts(loadShifts());
@@ -296,7 +483,9 @@ export default function App() {
       setGeneratedReports(loadGeneratedReports());
       setRoster(loadRoster());
       setHolidays(loadHolidays());
-      showToast('All system records restored to clean demo state.');
+      setNotifications(loadNotifications());
+      setOpenwaConfig(loadOpenWaConfig());
+      showToast('All system records restored to clean 2-user demo state.');
     }
   };
 
@@ -310,6 +499,8 @@ export default function App() {
     return last && (last.type === 'clock_in' || last.type === 'break_end');
   }).length;
 
+  const unreadNotificationsCount = notifications.filter((n) => !n.isRead).length;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased">
       {/* Toast message popup */}
@@ -320,7 +511,7 @@ export default function App() {
         </div>
       )}
 
-      {/* 3-Zone Top Navigation Bar */}
+      {/* Top Navigation Bar with Open-WA Notifications & Accountant Export */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -329,6 +520,10 @@ export default function App() {
         openAdminModal={() => setIsAdminModalOpen(true)}
         clockedInCount={clockedInCount}
         totalStaffCount={staffList.filter((s) => s.status === 'active').length}
+        unreadNotificationsCount={unreadNotificationsCount}
+        openNotificationsModal={() => setIsNotificationsModalOpen(true)}
+        onExportAccountantCsv={handleExportAccountantCsv}
+        isDbSynced={isDbSynced}
       />
 
       {/* Main Workspace Viewport */}
@@ -345,6 +540,40 @@ export default function App() {
           />
         )}
 
+        {/* Biometric Scanner att.log Hours & Accountant Calculation Hub */}
+        {activeTab === 'biometric_analytics' && (
+          <BiometricAnalyticsView
+            staffList={staffList}
+            punches={punches}
+            shifts={shifts}
+            leaves={leaves}
+            roster={roster}
+            adminProfile={adminProfile}
+            openUsbImport={() => setIsUsbModalOpen(true)}
+            onUpdateHourlyRate={handleUpdateHourlyRate}
+          />
+        )}
+
+        {activeTab === 'leaves' && (
+          <LeaveView
+            staffList={staffList}
+            leaves={leaves}
+            adminName={adminProfile.name}
+            onAddLeave={handleAddLeave}
+            onUpdateLeaveStatus={handleUpdateLeaveStatus}
+          />
+        )}
+
+        {activeTab === 'staff' && (
+          <StaffView
+            staffList={staffList}
+            shifts={shifts}
+            onAddStaff={handleAddStaff}
+            onUpdateStaff={handleUpdateStaff}
+            onDeleteStaff={handleDeleteStaff}
+          />
+        )}
+
         {activeTab === 'calendar' && (
           <CalendarView
             staffList={staffList}
@@ -357,16 +586,6 @@ export default function App() {
             onBatchAutoRoster={handleBatchAutoRoster}
             onAddHoliday={handleAddHoliday}
             onDeleteHoliday={handleDeleteHoliday}
-          />
-        )}
-
-        {activeTab === 'staff' && (
-          <StaffView
-            staffList={staffList}
-            shifts={shifts}
-            onAddStaff={handleAddStaff}
-            onUpdateStaff={handleUpdateStaff}
-            onDeleteStaff={handleDeleteStaff}
           />
         )}
 
@@ -447,15 +666,6 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'leaves' && (
-          <LeaveView
-            staffList={staffList}
-            leaves={leaves}
-            onAddLeave={handleAddLeave}
-            onUpdateLeaveStatus={handleUpdateLeaveStatus}
-          />
-        )}
-
         {activeTab === 'reports' && (
           <ReportsView
             staffList={staffList}
@@ -478,7 +688,29 @@ export default function App() {
         onUpdateAdmin={(updated) => {
           setAdminProfile(updated);
           saveAdminProfile(updated);
+          pushServerSync({ adminProfile: updated });
           showToast(`Admin profile updated for ${updated.name}`);
+        }}
+      />
+
+      <NotificationModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+        notifications={notifications}
+        openwaConfig={openwaConfig}
+        adminProfile={adminProfile}
+        onUpdateOpenwaConfig={(cfg) => {
+          setOpenwaConfig(cfg);
+          saveOpenWaConfig(cfg);
+          pushServerSync({ openwaConfig: cfg });
+          showToast('Open-WA configuration saved.');
+        }}
+        onSendTestNotification={handleSendTestNotification}
+        onMarkAllAsRead={() => {
+          const marked = notifications.map((n) => ({ ...n, isRead: true }));
+          setNotifications(marked);
+          saveNotifications(marked);
+          pushServerSync({ notifications: marked });
         }}
       />
 
@@ -488,7 +720,7 @@ export default function App() {
         staffList={staffList}
         existingPunches={punches}
         onCommitImport={handleCommitUsbPunches}
-        onQuickAddStaff={(bioId) => {
+        onQuickAddStaff={() => {
           setIsUsbModalOpen(false);
           setActiveTab('staff');
         }}
@@ -501,20 +733,29 @@ export default function App() {
         onAddManualPunch={handleRecordPunch}
       />
 
-      {/* Quiet Footer */}
+      {/* Footer */}
       <footer className="no-print mt-auto border-t border-slate-200 bg-white py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-800">Engen Florida-Glen Garage</span>
             <span>·</span>
             <span>Biometric USB Attendance & Shift Clocking</span>
+            <span>·</span>
+            <span className="font-medium text-emerald-700">Open-WA Active</span>
           </div>
 
           <div className="flex items-center gap-4">
             <button
+              onClick={handleExportAccountantCsv}
+              className="text-slate-600 hover:text-emerald-700 flex items-center gap-1 transition-colors font-medium"
+              title="Download accountant CSV pack"
+            >
+              <span>Export Accountant CSV</span>
+            </button>
+            <button
               onClick={handleResetDemoData}
               className="text-slate-400 hover:text-slate-700 flex items-center gap-1 transition-colors"
-              title="Reset records to default demo data"
+              title="Reset records to default demo data (2 users)"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset Demo Data</span>

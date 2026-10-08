@@ -19,6 +19,7 @@ import {
 interface LeaveViewProps {
   staffList: StaffMember[];
   leaves: LeaveRequest[];
+  adminName?: string;
   onAddLeave: (leave: LeaveRequest) => void;
   onUpdateLeaveStatus: (leaveId: string, status: LeaveStatus, reviewNotes?: string) => void;
 }
@@ -35,6 +36,7 @@ const LEAVE_TYPES: { id: LeaveType; label: string }[] = [
 export const LeaveView: React.FC<LeaveViewProps> = ({
   staffList,
   leaves,
+  adminName = 'Binnie',
   onAddLeave,
   onUpdateLeaveStatus,
 }) => {
@@ -53,6 +55,10 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
   // Rejection modal
   const [rejectingLeaveId, setRejectingLeaveId] = useState<string | null>(null);
   const [rejectNotes, setRejectNotes] = useState<string>('');
+
+  // Pend modal
+  const [pendingLeaveId, setPendingLeaveId] = useState<string | null>(null);
+  const [pendNotes, setPendNotes] = useState<string>('');
 
   const selectedStaff = staffList.find((s) => s.id === selectedStaffId);
 
@@ -106,14 +112,29 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
   };
 
   const handleApprove = (leave: LeaveRequest) => {
-    onUpdateLeaveStatus(leave.id, 'approved', 'Approved by supervisor');
+    onUpdateLeaveStatus(leave.id, 'approved', `Approved by Administrator ${adminName}`);
   };
 
   const handleConfirmReject = () => {
     if (!rejectingLeaveId) return;
-    onUpdateLeaveStatus(rejectingLeaveId, 'rejected', rejectNotes || 'Declined due to scheduling constraints');
+    onUpdateLeaveStatus(
+      rejectingLeaveId,
+      'declined',
+      rejectNotes || `Declined by Administrator ${adminName}`
+    );
     setRejectingLeaveId(null);
     setRejectNotes('');
+  };
+
+  const handleConfirmPend = () => {
+    if (!pendingLeaveId) return;
+    onUpdateLeaveStatus(
+      pendingLeaveId,
+      'pending',
+      pendNotes || `Marked pending by Administrator ${adminName} awaiting documentation`
+    );
+    setPendingLeaveId(null);
+    setPendNotes('');
   };
 
   // Metrics
@@ -323,19 +344,30 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => setRejectingLeaveId(req.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1"
+                      className="px-2.5 py-1.5 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1"
+                      title="Decline leave request"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       <span>Decline</span>
                     </button>
                     <button
                       type="button"
+                      onClick={() => setPendingLeaveId(req.id)}
+                      className="px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors flex items-center gap-1"
+                      title="Keep or mark as pending review"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Pend Request</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleApprove(req)}
                       className="px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded-lg transition-colors flex items-center gap-1"
+                      title="Approve leave request"
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
                       <span>Approve Leave</span>
@@ -395,13 +427,14 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
                 <th className="py-2.5 px-3">Reason / Details</th>
                 <th className="py-2.5 px-3">Applied On</th>
                 <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Reviewer</th>
+                <th className="py-2.5 px-3">Reviewer</th>
+                <th className="py-2.5 px-3 text-right">Actions (Admin Binnie)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-normal">
               {filteredLeaves.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-slate-400">
                     No leave requests match your search criteria.
                   </td>
                 </tr>
@@ -449,12 +482,46 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
                           {l.status}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right text-slate-500">
+                      <td className="py-2.5 px-3 text-slate-500">
                         {l.reviewedBy ? (
-                          <span className="text-[11px]">{l.reviewedBy}</span>
+                          <span className="text-[11px] font-medium">{l.reviewedBy}</span>
                         ) : (
-                          <span className="text-slate-400 italic text-[11px]">Pending</span>
+                          <span className="text-slate-400 italic text-[11px]">Pending Review</span>
                         )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {l.status !== 'approved' && (
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(l)}
+                              className="px-2 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors"
+                              title="Approve leave"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {l.status !== 'declined' && l.status !== 'rejected' && (
+                            <button
+                              type="button"
+                              onClick={() => setRejectingLeaveId(l.id)}
+                              className="px-2 py-1 text-[11px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200 transition-colors"
+                              title="Decline leave"
+                            >
+                              Decline
+                            </button>
+                          )}
+                          {l.status !== 'pending' && (
+                            <button
+                              type="button"
+                              onClick={() => setPendingLeaveId(l.id)}
+                              className="px-2 py-1 text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200 transition-colors"
+                              title="Set status to pending review"
+                            >
+                              Pend
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -608,13 +675,13 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
               Reason for Declining Leave
             </h4>
             <p className="text-xs text-slate-500 mb-3">
-              Optional feedback provided to the staff member:
+              Administrator Binnie: Please provide reason for decline:
             </p>
             <textarea
               rows={2}
               value={rejectNotes}
               onChange={(e) => setRejectNotes(e.target.value)}
-              placeholder="e.g. Peak operational demand on these dates"
+              placeholder="e.g. Forecourt staffing coverage shortage on requested dates"
               className="w-full text-xs rounded-lg border border-slate-300 p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-rose-500"
             />
             <div className="flex justify-end gap-2">
@@ -631,6 +698,43 @@ export const LeaveView: React.FC<LeaveViewProps> = ({
                 className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
               >
                 Confirm Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pend note modal */}
+      {pendingLeaveId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-2xs p-4 overflow-y-auto">
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden my-auto p-5">
+            <h4 className="text-sm font-bold text-slate-900 mb-2">
+              Mark Leave as Pending Review
+            </h4>
+            <p className="text-xs text-slate-500 mb-3">
+              Administrator Binnie: Add reason or pending requirements:
+            </p>
+            <textarea
+              rows={2}
+              value={pendNotes}
+              onChange={(e) => setPendNotes(e.target.value)}
+              placeholder="e.g. Awaiting medical certificate / Discussing with forecourt lead"
+              className="w-full text-xs rounded-lg border border-slate-300 p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingLeaveId(null)}
+                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPend}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg"
+              >
+                Set as Pending
               </button>
             </div>
           </div>

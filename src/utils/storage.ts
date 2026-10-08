@@ -8,6 +8,8 @@ import {
   AdminProfile,
   HolidayEvent,
   RosterShiftEntry,
+  NotificationItem,
+  OpenWaConfig,
 } from '../types';
 import {
   INITIAL_STAFF,
@@ -19,6 +21,8 @@ import {
   INITIAL_ADMIN,
   SOUTH_AFRICAN_HOLIDAYS,
   INITIAL_ROSTER,
+  INITIAL_NOTIFICATIONS,
+  INITIAL_OPENWA_CONFIG,
 } from '../data/initialData';
 
 const STORAGE_KEYS = {
@@ -31,6 +35,8 @@ const STORAGE_KEYS = {
   REPORTS: 'engen_florida_glen_reports_v3',
   ROSTER: 'engen_florida_glen_roster_v3',
   HOLIDAYS: 'engen_florida_glen_holidays_v3',
+  NOTIFICATIONS: 'engen_florida_glen_notifications_v3',
+  OPENWA: 'engen_florida_glen_openwa_v3',
 };
 
 export function loadAdminProfile(): AdminProfile {
@@ -204,6 +210,83 @@ export function saveHolidays(data: HolidayEvent[]): void {
   }
 }
 
+export function loadNotifications(): NotificationItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
+    if (raw) return JSON.parse(raw);
+  } catch (err) {
+    console.error('Failed to load notifications', err);
+  }
+  saveNotifications(INITIAL_NOTIFICATIONS);
+  return INITIAL_NOTIFICATIONS;
+}
+
+export function saveNotifications(data: NotificationItem[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(data));
+  } catch (err) {
+    console.error('Failed to save notifications', err);
+  }
+}
+
+export function loadOpenWaConfig(): OpenWaConfig {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.OPENWA);
+    if (raw) return JSON.parse(raw);
+  } catch (err) {
+    console.error('Failed to load Open-WA config', err);
+  }
+  saveOpenWaConfig(INITIAL_OPENWA_CONFIG);
+  return INITIAL_OPENWA_CONFIG;
+}
+
+export function saveOpenWaConfig(data: OpenWaConfig): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.OPENWA, JSON.stringify(data));
+  } catch (err) {
+    console.error('Failed to save Open-WA config', err);
+  }
+}
+
+/**
+ * Live Server Synchronization: persists current state to the active server database
+ */
+export async function syncToServerDatabase(payload: {
+  adminProfile?: AdminProfile;
+  staffList?: StaffMember[];
+  punches?: PunchRecord[];
+  leaves?: LeaveRequest[];
+  roster?: RosterShiftEntry[];
+  notifications?: NotificationItem[];
+  openwaConfig?: OpenWaConfig;
+}): Promise<boolean> {
+  try {
+    const res = await fetch('/api/db/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Loads the active state from the server database (if available)
+ */
+export async function fetchServerDatabase(): Promise<any | null> {
+  try {
+    const res = await fetch('/api/db/state');
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // Offline or server starting
+  }
+  return null;
+}
+
 export function resetAllToDemoData(): void {
   saveStaff(INITIAL_STAFF);
   saveShifts(INITIAL_SHIFTS);
@@ -213,5 +296,7 @@ export function resetAllToDemoData(): void {
   saveGeneratedReports(INITIAL_GENERATED_REPORTS);
   saveRoster(INITIAL_ROSTER);
   saveHolidays(SOUTH_AFRICAN_HOLIDAYS);
+  saveNotifications(INITIAL_NOTIFICATIONS);
+  saveOpenWaConfig(INITIAL_OPENWA_CONFIG);
 }
 

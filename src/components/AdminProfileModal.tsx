@@ -102,7 +102,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Bennie Mengoai"
+                placeholder="Binnie"
                 className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-900"
               />
             </div>
@@ -119,7 +119,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                 required
                 value={cellPhone}
                 onChange={(e) => setCellPhone(e.target.value)}
-                placeholder="076 010 7489"
+                placeholder="+27 010 7489"
                 className="w-full pl-9 pr-3 py-2 text-sm font-mono rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
               />
             </div>
@@ -136,7 +136,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Valerie.ajtransportcater@gmail.com"
+                placeholder="valerie.ajtransportcater@gmail.com"
                 className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
               />
             </div>
