@@ -13,11 +13,11 @@ import {
 } from '../types';
 
 export const INITIAL_ADMIN: AdminProfile = {
-  name: 'Binnie',
+  name: 'Kenken',
   cellPhone: '+27 010 7489',
-  email: 'valerie.ajtransportcater@gmail.com',
+  email: 'Kwenny.weeder71@gmail.com',
   role: 'Station Administrator & General Manager',
-  password: 'admin',
+  password: 'Bee@$$',
   isLoggedIn: true,
 };
 

@@ -54,9 +54,9 @@ interface ServerDatabase {
 function getInitialDatabase(): ServerDatabase {
   return {
     adminProfile: {
-      name: 'Binnie',
+      name: 'Kenken',
       cellPhone: '+27 010 7489',
-      email: 'valerie.ajtransportcater@gmail.com',
+      email: 'Kwenny.weeder71@gmail.com',
       role: 'Station Administrator & General Manager',
       isLoggedIn: true,
     },
