@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "Staff": {
+      "title": "Staff",
+      "description": "Staff members with biometric IDs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "biometricId": { "type": "string" }
+      },
+      "required": ["id", "name", "biometricId"]
+    },
+    "Punch": {
+      "title": "Punch",
+      "description": "Time clock punches",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "staffId": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "staffId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "staffList/{staffId}": {
+      "schema": "Staff",
+      "description": "Staff collection"
+    },
+    "punches/{punchId}": {
+      "schema": "Punch",
+      "description": "Punches collection"
+    }
+  }
+}

@@ -10,7 +10,6 @@ import {
   Bell,
   Download,
   Database,
-  CheckCircle2,
 } from 'lucide-react';
 import { EngenLogo } from './EngenLogo';
 import { AdminProfile } from '../types';
